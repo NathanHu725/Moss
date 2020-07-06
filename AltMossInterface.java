@@ -1,7 +1,8 @@
 import java.nio.file.*;
 import java.util.*;
+import java.io.BufferedReader;
 
-public interface MossInterface {
+public interface AltMossInterface {
     /* guarentee threshold - if a string is as long as t, MOSS will find it */
     public static final int t = 10;
 
@@ -13,10 +14,10 @@ public interface MossInterface {
 
     /* Takes a java (or other language) file and returns a string stripped
      * of names and comments. */
-    public String tokenize(Path file);
+    public BufferedReader tokenize(Path file);
     
     /* Use the winnowing algo to make a fingerprint of the document. */
-    public List<Integer> fingerprint(String tokenizedString);
+    public List<Integer> fingerprint(BufferedReader tokenizedString);
 
     /* Compute the similarity between two document fingerprints. */
     public Double score(List<Integer> fingerprintOne, List<Integer> fingerprintTwo);

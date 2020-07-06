@@ -11,6 +11,7 @@ class Moss implements MossInterface {
         try {
             return Files.readString(file);
         } catch (Exception e) {
+            System.out.println("Could not read file");
             return null;
         }
     }
@@ -22,36 +23,50 @@ class Moss implements MossInterface {
         Queue<Integer> window = new LinkedList<>();
         StringBuffer sBuffer = new StringBuffer(tokenizedString);
 
-        int index = 0;
-        int currentIndex = 0;
-        int lastIndex = 0;
-
-        while(index < w) {
-            window.add(sBuffer.substring(0, k).hashCode());
+        int minHash = Integer.MAX_VALUE;
+        int minHashLocalIndex = 0;
+        
+        // set up the first window
+        for (int i = 0; i < w; i++) {
+            int kGramHash = sBuffer.substring(0, k).hashCode();
+            if (kGramHash < minHash) {
+                minHash = kGramHash;
+                minHashLocalIndex = i;
+            }
+            window.add(kGramHash);
             sBuffer = sBuffer.deleteCharAt(0);
-            index++;
         }
 
-        while(sBuffer.length() >= w) {
-            int minHash = Integer.MAX_VALUE;
-            int localIndex = 0;
-            for (Integer hashValue: window) {
-                if (hashValue < minHash) {
-                    minHash = hashValue;
-                    currentIndex = index - w + localIndex;
-                }
-                localIndex++;
-            }
+        // add the min hash from the first window
+        fingerprint.add(minHash);
 
-            if (currentIndex != lastIndex ){//|| index == w) {
-                lastIndex = currentIndex;
-                fingerprint.add(minHash);
-            }
-
+        while (sBuffer.length() >= k) {
+            // remove the last element from the window and add the next kGramHash
+            int kGramHash = sBuffer.substring(0, k).hashCode();
             window.remove();
-            window.add(sBuffer.substring(0, k).hashCode());
+            window.add(kGramHash);
             sBuffer = sBuffer.deleteCharAt(0);
-            index++;
+            minHashLocalIndex--;
+
+            if (minHashLocalIndex < 0) {
+                minHash = Integer.MAX_VALUE;
+                int localIndex = 0;
+                for (Integer hash : window) {
+                    minHashLocalIndex++;
+                    if (hash < minHash) {
+                        minHash = hash;
+                        minHashLocalIndex = localIndex;
+                    }
+                    localIndex++;
+                }
+                fingerprint.add(minHash);
+            } else {
+                if (kGramHash < minHash) {
+                    minHash = kGramHash;
+                    minHashLocalIndex = w;
+                    fingerprint.add(minHash);
+                } 
+            }
         }
 
         return fingerprint;
@@ -75,13 +90,16 @@ class Moss implements MossInterface {
 
     public static void main(String[] args) {
         Moss m = new Moss();
-        String tokenizedStringOne = m.tokenize(Paths.get("TestFiles/testFile1.txt"));
-        String tokenizedStringTwo = m.tokenize(Paths.get("TestFiles/testFile2.txt"));
+        String tokenizedStringOne = m.tokenize(Paths.get("AltMoss.java"));
+        String tokenizedStringTwo = m.tokenize(Paths.get("Moss.java"));
 
         List<Integer> fingerprintOne = m.fingerprint(tokenizedStringOne);
         List<Integer> fingerprintTwo = m.fingerprint(tokenizedStringTwo);
+        
+
+        System.out.println(fingerprintOne);
+        System.out.println(fingerprintTwo);
 
         System.out.println(m.score(fingerprintOne, fingerprintTwo));
-
     }
 }
