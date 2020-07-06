@@ -11,6 +11,7 @@ class Moss implements MossInterface {
         try {
             return Files.readString(file);
         } catch (Exception e) {
+            System.out.println("Could not read file");
             return null;
         }
     }
@@ -19,12 +20,10 @@ class Moss implements MossInterface {
     // I just wanted to give it a quick run through to see how it worked
     public List<Integer> fingerprint(String tokenizedString) {
         List<Integer> fingerprint = new ArrayList<Integer>();
-        Queue<Integer> window = new LinkedList<>();
+        Vector<Integer> window = new Vector<Integer>(w);
         StringBuffer sBuffer = new StringBuffer(tokenizedString);
 
         int index = 0;
-        int currentIndex = 0;
-        int lastIndex = 0;
 
         while(index < w) {
             window.add(sBuffer.substring(0, k).hashCode());
@@ -32,23 +31,26 @@ class Moss implements MossInterface {
             index++;
         }
 
-        while(sBuffer.length() >= w) {
-            int minHash = Integer.MAX_VALUE;
-            int localIndex = 0;
-            for (Integer hashValue: window) {
-                if (hashValue < minHash) {
-                    minHash = hashValue;
-                    currentIndex = index - w + localIndex;
+        int minHashIndex = 0;
+
+        while(sBuffer.length() >= k) {
+            if(minHashIndex == 0) {
+                int minHash = window.get(0);
+                for(int i = 1; i < window.size(); i++) {
+                    int hashValue = window.get(i);
+                    if(hashValue < minHash) {
+                        minHash = hashValue;
+                        minHashIndex = i;
+                    }
                 }
-                localIndex++;
+                fingerprint.add(window.get(minHashIndex));
+            } else {
+                if(window.get(minHashIndex--) > window.get(window.size() - 1)) {
+                    minHashIndex = window.size() - 1;
+                    fingerprint.add(window.get(minHashIndex));
+                }
             }
-
-            if (currentIndex != lastIndex ){//|| index == w) {
-                lastIndex = currentIndex;
-                fingerprint.add(minHash);
-            }
-
-            window.remove();
+            window.remove(0);
             window.add(sBuffer.substring(0, k).hashCode());
             sBuffer = sBuffer.deleteCharAt(0);
             index++;
@@ -75,8 +77,8 @@ class Moss implements MossInterface {
 
     public static void main(String[] args) {
         Moss m = new Moss();
-        String tokenizedStringOne = m.tokenize(Paths.get("TestFiles/testFile1.txt"));
-        String tokenizedStringTwo = m.tokenize(Paths.get("TestFiles/testFile2.txt"));
+        String tokenizedStringOne = m.tokenize(Paths.get("TestFiles/testFile3.java"));
+        String tokenizedStringTwo = m.tokenize(Paths.get("TestFiles/testFile4.java"));
 
         List<Integer> fingerprintOne = m.fingerprint(tokenizedStringOne);
         List<Integer> fingerprintTwo = m.fingerprint(tokenizedStringTwo);
