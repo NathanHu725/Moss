@@ -14,11 +14,26 @@ public interface MossInterface {
     /* Takes a java (or other language) file and returns a string stripped
      * of names and comments. */
     public String tokenize(Path file);
+
+    public List<Integer> generateKGramHashes(String tokenizedString);
     
     /* Use the winnowing algo to make a fingerprint of the document. */
-    public List<Integer> fingerprint(String tokenizedString);
+    public List<Integer> fingerprint(List<Integer> kGramHashes);
 
     /* Compute the similarity between two document fingerprints. */
-    public Double score(List<Integer> fingerprintOne, List<Integer> fingerprintTwo);
+    public static Double score(List<Integer> fingerprintOne, List<Integer> fingerprintTwo) {
+        // not quite jaccard similarity but nearly
+        int union = fingerprintOne.size() + fingerprintTwo.size();
+        int intersection = 0;
+        
+        for (Integer i : fingerprintOne) {
+            if (fingerprintTwo.contains(i)) {
+                intersection++;
+                union--;
+            }
+        }
 
+        System.out.println(intersection + " / " + union);
+        return Double.valueOf(intersection) / Double.valueOf(union);
+    }
 }
