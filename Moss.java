@@ -2,9 +2,25 @@ import java.nio.file.*;
 import java.util.*;
 
 class Moss implements MossInterface { 
+
+    /* guarentee threshold - if a string is as long as t, MOSS will find it */
+    public int t;
+
+    /* noise threshold - should be high enough to eliminate coincidental matches */
+    public int k;
+
+    /* window size - number of consecutive hashes of k-grams for winnowing */
+    public int w = t - k + 1;
+
+    /* score - saves the score calculated for a given document for extraction at a later time */
+    public List<Integer> docFingerprint;
+
     // some contructors to use later   
-    public Moss(Path dir) {}
-    public Moss() {}
+    public Moss(Path dir, int tValue, int kValue) {
+        t = tValue;
+        k = kValue;
+        mossRun(dir);
+    }
 
     // For now this just returns a string of the file
     public String tokenize(Path file) {
@@ -34,21 +50,28 @@ class Moss implements MossInterface {
         int minHashIndex = 0;
 
         while(sBuffer.length() >= k) {
+
             if(minHashIndex == 0) {
                 int minHash = window.get(0);
+
                 for(int i = 1; i < window.size(); i++) {
                     int hashValue = window.get(i);
+
                     if(hashValue < minHash) {
                         minHash = hashValue;
                         minHashIndex = i;
                     }
+
                 }
+
                 fingerprint.add(window.get(minHashIndex));
             } else {
+
                 if(window.get(minHashIndex--) > window.get(window.size() - 1)) {
                     minHashIndex = window.size() - 1;
                     fingerprint.add(window.get(minHashIndex));
                 }
+
             }
             window.remove(0);
             window.add(sBuffer.substring(0, k).hashCode());
@@ -59,31 +82,13 @@ class Moss implements MossInterface {
         return fingerprint;
     }
 
-    public Double score(List<Integer> fingerprintOne, List<Integer> fingerprintTwo) {
-        // not quite jaccard similarity but nearly
-        int union = fingerprintOne.size() + fingerprintTwo.size();
-        int intersection = 0;
-        
-        for (Integer i : fingerprintOne) {
-            if (fingerprintTwo.contains(i)) {
-                intersection++;
-                union--;
-            }
-        }
+    private void mossRun(Path dir) {
+        String tokenizedString = tokenize(dir);
+        docFingerprint = fingerprint(tokenizedString);
 
-        System.out.println(intersection + " / " + union);
-        return Double.valueOf(intersection) / Double.valueOf(union);
     }
 
-    public static void main(String[] args) {
-        Moss m = new Moss();
-        String tokenizedStringOne = m.tokenize(Paths.get("TestFiles/testFile3.java"));
-        String tokenizedStringTwo = m.tokenize(Paths.get("TestFiles/testFile4.java"));
-
-        List<Integer> fingerprintOne = m.fingerprint(tokenizedStringOne);
-        List<Integer> fingerprintTwo = m.fingerprint(tokenizedStringTwo);
-
-        System.out.println(m.score(fingerprintOne, fingerprintTwo));
-
+    public List<Integer> getFingerprint() {
+        return docFingerprint;
     }
 }
