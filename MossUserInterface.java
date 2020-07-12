@@ -1,5 +1,6 @@
 import java.util.*;
 import java.io.File;
+import structure5.Association;
 
 public class MossUserInterface {
 
@@ -14,8 +15,9 @@ public class MossUserInterface {
         while(true) {
             System.out.println("What would you like the lowest score threshold to be?");
             try {
-                scoreThreshold = in.nextDouble();
+                scoreThreshold = Double.parseDouble(in.nextLine());
                 if(scoreThreshold > 1 || scoreThreshold < 0) throw new NullPointerException();
+                break;
             } catch(Exception e) {
                 System.out.println("That was not a valid score threshold, please try again.");
             }
@@ -49,7 +51,7 @@ public class MossUserInterface {
             }
         }
 
-        Vector<Association<File, List<Integer>>> fingerprints = new Vector<List<Integer>>();
+        Vector<Association<File, List<Integer>>> fingerprints = new Vector<Association<File, List<Integer>>>();
         File folder = new File(folderPath);
         File[] filesToBeScanned = folder.listFiles();
 
