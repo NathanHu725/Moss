@@ -114,7 +114,6 @@ public class Moss {
     public static Double jaccardScore(List<Integer> fingerprintA, List<Integer> fingerprintB) {
         Set<Integer> setA = new HashSet<Integer>(fingerprintA);
         Set<Integer> setB = new HashSet<Integer>(fingerprintB);
-
         int union = setA.size() + setB.size();
         int intersection = 0;
         
@@ -124,8 +123,26 @@ public class Moss {
                 union--;
             }
         }
-
         return Double.valueOf(intersection) / Double.valueOf(union);
+    }
+
+    /* 
+     * Compute the Sørensen–Dice coefficient.
+     * Updated to treat the fingerprint as a set to accurately reflect the
+     * Sørensen–Dice coefficient.
+     */
+    public static Double sdScore(List<Integer> fingerprintA, List<Integer> fingerprintB) {
+        Set<Integer> setA = new HashSet<Integer>(fingerprintA);
+        Set<Integer> setB = new HashSet<Integer>(fingerprintB);
+        int denominator = setA.size() + setB.size();
+        int intersection = 0;
+        
+        for (Integer i : setA) {
+            if (setB.contains(i)) {
+                intersection++;
+            }
+        }
+        return 2 * Double.valueOf(intersection) / Double.valueOf(denominator);
     }
 
     // debugging
@@ -136,10 +153,15 @@ public class Moss {
         System.out.println(m1.getFingerprint());
         System.out.println(m2.getFingerprint());
         System.out.println(m3.getFingerprint());
+
+        System.out.println("Jaccard scores");
         System.out.println(Moss.jaccardScore(m1.getFingerprint(), m2.getFingerprint()));
         System.out.println(Moss.jaccardScore(m1.getFingerprint(), m3.getFingerprint()));
         System.out.println(Moss.jaccardScore(m2.getFingerprint(), m3.getFingerprint()));
-        System.out.println(Moss.jaccardScore(m3.getFingerprint(), m2.getFingerprint()));
 
+        System.out.println("Sørensen–Dice scores");
+        System.out.println(Moss.sdScore(m1.getFingerprint(), m2.getFingerprint()));
+        System.out.println(Moss.sdScore(m1.getFingerprint(), m3.getFingerprint()));
+        System.out.println(Moss.sdScore(m2.getFingerprint(), m3.getFingerprint()));
     }
 }
