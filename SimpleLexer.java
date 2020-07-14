@@ -1,6 +1,9 @@
 /* 
  * Authored by Jules W-G on 7/13
  * 
+ * This static class has one public method, jLex, which
+ * will take a buffered reader and return a single String
+ * of the text in the java document.
  * 
  * based on implementation found at
  * https://www.cc.gatech.edu/gvu/people/Faculty/hudson/java_cup/classes.v0.9e/java_cup/lexer.java
@@ -11,17 +14,23 @@ import java.nio.file.*;
 import java.util.*;
 
 public class SimpleLexer {
+    /* never used */
     private SimpleLexer() {}
 
+    /* keep track of next two characters from the document */
     protected static int nextChar;
     protected static int nextChar2;
     protected static int EOF_CHAR = -1;
 
-    protected static Hashtable<String, Integer> keywords = new Hashtable<>(125);
-    protected static BufferedReader in;
-    protected static StringBuffer result; 
+    /* the 51 java keywords and "true", "false", "null" */
+    protected static Hashtable<String, Integer> keywords;
 
-    public static String lex(BufferedReader input) throws IOException {
+    /* input and output */
+    protected static BufferedReader in;
+    protected static StringBuilder result; 
+
+    /* Returns a complete String produced from java source code */
+    public static String jLex(BufferedReader input) throws IOException {
         // set up the lexer and feed it the input reader
         setup(input);
         nextChar = in.read();
@@ -60,10 +69,12 @@ public class SimpleLexer {
         return result.toString();
     }
 
+    /* initialize static instance variables. */
     private static void setup(BufferedReader input) {
-        result = new StringBuffer();
+        result = new StringBuilder();
         in = input;
-        
+        keywords = new Hashtable<>(120);
+
         String[] allKeywords = {"abstract", "assert", "boolean", "break", "byte", "case",
                             "catch", "char", "class", "const", "continue", "default", "do",
                             "double", "else", "enum", "extends", "final", "finally", "float",
@@ -77,6 +88,7 @@ public class SimpleLexer {
             keywords.put(elem, 0);
     }
 
+    /* read the next character from the file */
     private static void advance() throws IOException {
         nextChar = nextChar2;
         if (nextChar == EOF_CHAR) {
@@ -86,13 +98,14 @@ public class SimpleLexer {
         }
     }
 
+    /* returns "V" for all identifiers, and the string if a keyword */
     private static String nextToken() throws IOException {
-        StringBuffer sBuffer = new StringBuffer();
+        StringBuilder sBuilder = new StringBuilder();
         while (Character.isJavaIdentifierPart(nextChar)) {
-            sBuffer.append((char)nextChar);
+            sBuilder.append((char)nextChar);
             advance();
         }
-        String token = sBuffer.toString();
+        String token = sBuilder.toString();
         
         // if this token is a keyword return it, else return "V"
         if (keywords.get(token) != null) {
@@ -102,24 +115,26 @@ public class SimpleLexer {
         }
     }
 
+    /* return a string literal */
     private static String nextStringLiteral() throws IOException {
-        StringBuffer sBuffer = new StringBuffer();
+        StringBuilder sBuilder = new StringBuilder();
         int startingChar = nextChar;
-        sBuffer.append((char)nextChar); // append the first apostrophe
+        sBuilder.append((char)nextChar); // append the first apostrophe
         advance();
         while (nextChar != startingChar) {
             if (nextChar == '\\') {
-                sBuffer.append(nextEscapeSequence());
+                sBuilder.append(nextEscapeSequence());
             } else {
-                sBuffer.append((char)nextChar);
+                sBuilder.append((char)nextChar);
                 advance();
             }
         }
-        sBuffer.append((char)nextChar);
+        sBuilder.append((char)nextChar);
         advance();
-        return sBuffer.toString();
+        return sBuilder.toString();
     }
 
+    /* return the two-character escape sequence */
     private static String nextEscapeSequence() throws IOException {
         assert nextChar == '\\' : "Not start of escape sequence";
         String seq = "" + (char)nextChar + (char)nextChar2;
@@ -131,9 +146,9 @@ public class SimpleLexer {
     // debugging
     public static void main(String[] args) throws IOException {
         Path file = Paths.get("testJava.java");
-        String reducedFile = SimpleLexer.lex(Files.newBufferedReader(file));
+        String reducedFile = SimpleLexer.jLex(Files.newBufferedReader(file));
         System.out.println(reducedFile + "\n");
-        reducedFile = SimpleLexer.lex(Files.newBufferedReader(file));
+        reducedFile = SimpleLexer.jLex(Files.newBufferedReader(file));
         System.out.println(reducedFile);
     }
 }
