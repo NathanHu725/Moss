@@ -17,6 +17,7 @@
  - [ ] Update SimpleLexer to more smartly parse Java files
  - [ ] Approach dealing with attacks
  - [ ] Scrape publicly available code and store intermediate representations
+ - [ ] Use TF-IDF to give less weight to common k-gram / hash values
  - [ ] Come up with other todos
  
 ## Common Attacks (listed in Ohmann, 2013)
