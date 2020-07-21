@@ -1,5 +1,7 @@
 import java.nio.file.*;
 import java.util.*;
+import com.strobel.decompiler.*;
+import java.io.*;
 
 public class Moss {
     /* guarentee threshold - if a string is as long as t, MOSS will find it */
@@ -30,6 +32,33 @@ public class Moss {
     /* fingerprint getter */
     public List<Integer> getFingerprint() {
         return fingerprint;
+    }
+
+    /* Compiles then decompiles a java file, overwriting the original file 
+     * * Maybe the decompiler isnt perfect, but there are sometimes issues here. *
+     */
+    public static void compileAndDecompile(Path file) {
+        final String fileName = file.toString();
+        final String compiledFileName = fileName.substring(0, fileName.length() - 5) + ".class";
+        final String decompiledFileName = "Decompiled_" + fileName;
+
+        // run javac in command line
+        try {
+            Runtime.getRuntime().exec("javac " + fileName);
+        } catch (Exception e) {
+            System.out.println("Compiling failed.");
+            return;
+        }
+
+        final DecompilerSettings settings = DecompilerSettings.javaDefaults();
+
+        // use procyon to decompile the above compiled file
+        try (final FileOutputStream stream = new FileOutputStream(decompiledFileName);
+            final OutputStreamWriter writer = new OutputStreamWriter(stream)) {
+            Decompiler.decompile(compiledFileName, new PlainTextOutput(writer), settings);
+        }  catch (Exception e) {
+            System.out.println("Decompiling failed.");
+        }
     }
 
     // Converts a file to a string stripped of whitespace
