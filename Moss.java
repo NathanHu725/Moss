@@ -42,20 +42,34 @@ public class Moss {
         final String compiledFileName = fileName.substring(0, fileName.length() - 5) + ".class";
         final String decompiledFileName = "Decompiled_" + fileName;
 
-        // run javac in command line
+        //run javac in command line
         try {
-            Runtime.getRuntime().exec("javac " + fileName);
+            Process p = Runtime.getRuntime().exec("javac " + fileName);
+            System.out.println("Compiling...");
+            p.waitFor();
         } catch (Exception e) {
             System.out.println("Compiling failed.");
             return;
         }
 
+        Moss.decompile(decompiledFileName, compiledFileName);
+
+    }
+
+    // Compile all java files in a directory
+    public static void compileAll(Path dir) throws Exception {
+        Process p = Runtime.getRuntime().exec("javac " + dir.toString() + "*.java");
+        p.waitFor();
+    }
+
+    // use procyon to decompile the file
+    public static void decompile(String decompiledFileName, String compiledFileName) {
         final DecompilerSettings settings = DecompilerSettings.javaDefaults();
 
-        // use procyon to decompile the above compiled file
         try (final FileOutputStream stream = new FileOutputStream(decompiledFileName);
             final OutputStreamWriter writer = new OutputStreamWriter(stream)) {
             Decompiler.decompile(compiledFileName, new PlainTextOutput(writer), settings);
+            writer.close();
         }  catch (Exception e) {
             System.out.println("Decompiling failed.");
         }
@@ -176,17 +190,22 @@ public class Moss {
 
     // debugging
     public static void main(String[] args) {
+        Moss.compileAndDecompile(Paths.get("testJava.java"));
+        
         Moss m1 = new Moss(Paths.get("Moss.java"));
         Moss m2 = new Moss(Paths.get("SimpleLexer.java"));
         Moss m3 = new Moss(Paths.get("testJava.java"));
+
         System.out.println(m1.getFingerprint());
         System.out.println(m2.getFingerprint());
         System.out.println(m3.getFingerprint());
+
 
         System.out.println("Jaccard scores");
         System.out.println(Moss.jaccardScore(m1.getFingerprint(), m2.getFingerprint()));
         System.out.println(Moss.jaccardScore(m1.getFingerprint(), m3.getFingerprint()));
         System.out.println(Moss.jaccardScore(m2.getFingerprint(), m3.getFingerprint()));
+
 
         System.out.println("Sørensen–Dice scores");
         System.out.println(Moss.sdScore(m1.getFingerprint(), m2.getFingerprint()));
